@@ -29,7 +29,7 @@ else:
 subreddit = reddit.subreddit("pythonforengineers")
 for submission in subreddit.new(limit=1):
 	
-	d = datetime.datetime.fromtimestamp(submission.created_utc)
+	d = datetime.datetime.utcfromtimestamp(submission.created_utc)
 	t = convertthing(d)
 	if submission.id not in posts_replied_to:
 		if re.search("time test", submission.title, re.IGNORECASE) and t >= 600:
@@ -38,7 +38,7 @@ for submission in subreddit.new(limit=1):
 			print("Bot replying to: ", submission.title)
 			print("Time:\n ")
 			print(datetime.datetime.utcnow())
-			print(datetime.datetime.fromtimestamp(int(submission.created_utc)))
+			print(datetime.datetime.utcfromtimestamp(int(submission.created_utc)))
 			print(t)
 			posts_replied_to.append(submission.id)
 #	d = datetime.datetime.fromtimestamp(int(submission.created_utc))
