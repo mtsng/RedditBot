@@ -36,7 +36,7 @@ def checkFlairReply(submission, posts_flaired, flair_check_timer):
 	if (time_diff >= flair_check_timer and submission.link_flair_text is None and submission.id not in posts_flaired):
 		print("here2")
 		for comment in submission.comments.list():
-			if comment.author == submission.author and re.search("^\[", comment.body):
+			if comment.author == submission.author and re.search("^\[.*\]$", comment.body):
 				print("here3")
 				flair = comment.body
 				print(flair[1:])
