@@ -20,20 +20,29 @@ def timestampToUTC(timestamp):
 	return datetime.datetime.utcfromtimestamp(timestamp)
 
 
-def checkFlairReply(flair_check_timer, timestamp):
-	post_date = timestampToUTC(timestamp)
-	time_diff = calTimeDiff(post_date)
+def checkFlairReply(submission, posts_flaired, flair_check_timer):
+	post_time = timestampToUTC(submission.created_utc)
+	time_diff = calTimeDiff(post_time)
 
-	if time_diff >= flair_check_timer:
+	if (time_diff >= flair_check_timer and submssion.link_flair_text is None):
+		if 
 		
-def checkForFlair(submission):		
+		
+def checkForFlair(submission, posts_replied_to, message, time_limit):		
+	post_time = timestampToUTC(submission.created_utc)
+	time_diff = calTimeDiff(post_time)
+	
+	if submission.id not in posts_replied_to:
+		if(time_diff >= time_limit and submission.link_flair_text is None):
+			submission.reply(message)
 
+			posts_replied_to.append(submission.id)
 
 
 #Main Function
 def main():
 	bot = 'bot1'
-	subredname = "grandorder"
+	subredditname = "grandorder"
 	post_limit = 5
 	time_limit = 900 #15 min
 	message = "Please Flair"
@@ -50,19 +59,29 @@ def main():
 			posts_replied_to = posts_replied_to.split("\n")
 			posts_replied_to = list(filter(None, posts_replied_to))
 
-	subreddit = reddit.subreddit(subredname)
+	if not os.path.isfile("posts_flaired.txt"):
+		posts_flaired = []
+	else:
+		with open("posts_flaired.txt", "r") as f:
+			posts_flaired = f.read()
+			posts_flaired = posts_flaired.split("\n")
+			posts_flaired = list(filter(None, posts_flaired))
+
+
+	subreddit = reddit.subreddit(subredditname)
 	
 	for submission in subreddit.new(limit=post_limit):
-		post_date = timestampToUTC(submission.created_utc)
-		time_diff = calTimeDiff(post_date)
+		checkForFlair(submssion, posts_replied_to, message, time_limit)
 
-		if submission.id not in posts_replied_to:
-			if (time_diff >= time_limit and submission.link_flair_text is None):
-				submission.reply(message)
-
-				posts_replied_to.append(submission.id)
+	for post_id in posts_replied_to:
+		missing_flair_post = reddit.submission(post_id)
+		checkFlairReply(missing_flair_post, flair_check_timer)
 	
 	with open("posts_replied_to.txt", "w") as f:
+		for post_id in posts_replied_to:
+			f.write(post_id + "\n")
+
+	with open("posts_flaired.txt", "w") as f:
 		for post_id in posts_replied_to:
 			f.write(post_id + "\n")
 
