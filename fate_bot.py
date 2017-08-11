@@ -15,6 +15,10 @@ def calTimeDiff(post_date):
 
 	return tdelta.total_seconds()
 
+def timeNow():
+	
+	return datetime.datetime.utcnow()
+
 def timestampToUTC(timestamp):
 	
 	return datetime.datetime.utcfromtimestamp(timestamp)
@@ -25,8 +29,12 @@ def checkFlairReply(submission, posts_flaired, flair_check_timer):
 	time_diff = calTimeDiff(post_time)
 
 	if (time_diff >= flair_check_timer and submssion.link_flair_text is None):
-		if 
-		
+		for comment in submission.comments.list():
+			if comment.author == submission.author and re.search("[^", comment.body):
+				flair = comment.body
+				print(flair[1:])
+				#submission.mod.flair(text=flair, css_class='bot')
+					
 		
 def checkForFlair(submission, posts_replied_to, message, time_limit):		
 	post_time = timestampToUTC(submission.created_utc)
@@ -44,9 +52,10 @@ def main():
 	bot = 'bot1'
 	subredditname = "grandorder"
 	post_limit = 5
-	time_limit = 900 #15 min
+	time_limit = 120
 	message = "Please Flair"
-	flair_check_timer = 1800 #30 min
+	flair_check_timer = 300
+	interval_start = timeNow()
 
 	reddit = praw.Reddit(bot)
 
@@ -73,9 +82,12 @@ def main():
 	for submission in subreddit.new(limit=post_limit):
 		checkForFlair(submssion, posts_replied_to, message, time_limit)
 
-	for post_id in posts_replied_to:
-		missing_flair_post = reddit.submission(post_id)
-		checkFlairReply(missing_flair_post, flair_check_timer)
+	if calTimeDiff(interval_start) >= flair_check_timer:
+		interval_start = timeNow()
+
+		for post_id in posts_replied_to:
+			missing_flair_post = reddit.submission(post_id)
+			checkFlairReply(missing_flair_post, flair_check_timer)
 	
 	with open("posts_replied_to.txt", "w") as f:
 		for post_id in posts_replied_to:
