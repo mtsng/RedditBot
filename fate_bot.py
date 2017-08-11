@@ -9,9 +9,9 @@ import re
 import datetime
 import time
 
-def calTimeDiff(post_date):
+def calTimeDiff(post_time):
 	time_now = datetime.datetime.utcnow()
-	tdelta = time_now - post_date
+	tdelta = time_now - post_time
 
 	return tdelta.total_seconds()
 
@@ -27,20 +27,32 @@ def timestampToUTC(timestamp):
 def checkFlairReply(submission, posts_flaired, flair_check_timer):
 	post_time = timestampToUTC(submission.created_utc)
 	time_diff = calTimeDiff(post_time)
-
-	if (time_diff >= flair_check_timer and submssion.link_flair_text is None):
+	print(time_diff)
+	print(post_time)
+	print(flair_check_timer)
+	print(time_diff >= flair_check_timer)
+	print(submission.link_flair_text is None)
+	print(submission.id not in posts_flaired)
+	if (time_diff >= flair_check_timer and submission.link_flair_text is None and submission.id not in posts_flaired):
+		print("here2")
 		for comment in submission.comments.list():
-			if comment.author == submission.author and re.search("[^", comment.body):
+			if comment.author == submission.author and re.search("^\[", comment.body):
+				print("here3")
 				flair = comment.body
 				print(flair[1:])
+				posts_flaired.append(submission.id)
 				#submission.mod.flair(text=flair, css_class='bot')
 					
 		
 def checkForFlair(submission, posts_replied_to, message, time_limit):		
 	post_time = timestampToUTC(submission.created_utc)
 	time_diff = calTimeDiff(post_time)
-	
+
+	#print(submission.id)
+	#print(posts_replied_to)	
 	if submission.id not in posts_replied_to:
+		print(submission.id)
+		print(posts_replied_to)
 		if(time_diff >= time_limit and submission.link_flair_text is None):
 			submission.reply(message)
 
@@ -50,8 +62,8 @@ def checkForFlair(submission, posts_replied_to, message, time_limit):
 #Main Function
 def main():
 	bot = 'bot1'
-	subredditname = "grandorder"
-	post_limit = 5
+	subredditname = "pythonforengineers"
+	post_limit = 1
 	time_limit = 120
 	message = "Please Flair"
 	flair_check_timer = 300
@@ -80,14 +92,15 @@ def main():
 	subreddit = reddit.subreddit(subredditname)
 	
 	for submission in subreddit.new(limit=post_limit):
-		checkForFlair(submssion, posts_replied_to, message, time_limit)
+		checkForFlair(submission, posts_replied_to, message, time_limit)
 
-	if calTimeDiff(interval_start) >= flair_check_timer:
+	#if calTimeDiff(interval_start) >= flair_check_timer:
+	if True:
 		interval_start = timeNow()
 
 		for post_id in posts_replied_to:
 			missing_flair_post = reddit.submission(post_id)
-			checkFlairReply(missing_flair_post, flair_check_timer)
+			checkFlairReply(missing_flair_post, posts_flaired, flair_check_timer)
 	
 	with open("posts_replied_to.txt", "w") as f:
 		for post_id in posts_replied_to:
