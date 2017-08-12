@@ -44,7 +44,7 @@ def checkFlairReply(submission, posts_flaired, flair_check_timer):
 			#checks the comment to see if it has the same author as the post and if they have a potential flair
 			if comment.author == submission.author and re.search("^\[.*\]$", comment.body):
 				flair = comment.body
-				print(flair[1:flair.len() - 1])
+				print(flair[1:len(flair) - 1])
 				posts_flaired.append(submission.id)
 				#submission.mod.flair(text=flair, css_class='bot')
 					
