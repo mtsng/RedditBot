@@ -14,7 +14,8 @@ import sys
 flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoliers': 's', 'NA News': 't', 'NA PSA': 't',
 	'NA Spoliers': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 'PSA': 'k',
 	'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
-	'Poll': 'i'}
+	'Poll': 'i', 'Moderator': 'a', 'Maintenance': 'c', 'Stream': 'b', 'OC': 'b', 'New Post': 'b'}
+
 
 #handle ratelimit issues by bboe
 def handle_ratelimit(func, *args, **kwargs):
@@ -54,6 +55,9 @@ def check_flair_reply(submission, posts_flaired, flair_check_timer):
 	if submission.link_flair_text != None and submission.id not in posts_flaired:
 		posts_flair.append(submission.id)
 
+	print(time_diff >= flair_check_timer)
+	print(submission.link_flair_text is None)
+	print(submission.id not in posts_flaired)
 	#checks for proper post "age", a missing flair, and absence in the posts_flaired list	
 	if (time_diff >= flair_check_timer and submission.link_flair_text is None and submission.id not in posts_flaired):
 		#loops through the top level comments of the post
@@ -63,24 +67,24 @@ def check_flair_reply(submission, posts_flaired, flair_check_timer):
 				flair_comment = top_level_comment.body
 				flair = flair_comment[1:len(flair_comment) - 1]
 				print(flair)
-
+				
 				#if the flair is valid, the post is flaired, otherwise inform the poster of an incorrect flair
 				if(check_valid_flair(flair)):
+					print("work")
 					top_level_comment.reply("Post has been flaired: " + flair)
 					posts_flaired.append(submission.id)
-					#submission.mod.flair(text=flair, css_class='bot')
+					submission.mod.flair(text=flair, css_class=flairs[flair])
 				else:
+					print("fail")
 					top_level_comment.reply("Incorrect flair. Please try again")
 
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
-
-	try:
-		test = flairs[flair]
-	except KeyError:
-		return false
 	
-	return true
+	if flair in flairs:
+		return True
+	
+	return False
 
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
 def check_for_flair(submission, posts_replied_to, message, time_limit):		
@@ -102,11 +106,11 @@ def check_for_flair(submission, posts_replied_to, message, time_limit):
 #Main Function
 def main():
 	bot = 'bot1'
-	subreddit_name = "pythonforengineers"
+	subreddit_name = "fgobottest"
 	text_limit = 100
 	start_pt_modifier = .25
-	post_limit = 1 #number of posts to be checked at a time
-	time_limit = 120 #time limit (in seconds) for unflaired post before bot comment
+	post_limit = 2 #number of posts to be checked at a time
+	time_limit = 300 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
 	flair_check_timer = 300 #the amount of time (in seconds) given for user to flair post after bot comment
 #	interval_start = timeNow()
@@ -174,7 +178,7 @@ def main():
 			f.write(post_id + "\n")
 	#writes the list beck to the file
 	with open("posts_flaired.txt", "w") as f:
-		for post_id in posts_replied_to:
+		for post_id in posts_flaired:
 			f.write(post_id + "\n")
 
 main()	
