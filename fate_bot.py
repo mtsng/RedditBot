@@ -1,7 +1,7 @@
 #This bot is based on the tutorial by shantnu
 #Check out his tutorial at: pythonforengineers.com/build-a-reddit-bot-part-1
 #Check out John Huttlinger too for his flair bot: github.com/JBHUTT09
-#Checkout bboe for his handling of the ratelimit: github.com/bboe 
+#Check out bboe for his handling of the ratelimit: github.com/bboe 
 
 import praw
 import pdb
@@ -11,7 +11,7 @@ import datetime
 import time
 import sys
 
-#handle ratelimit issues
+#handle ratelimit issues by bboe
 def handle_ratelimit(func, *args, **kwargs):
 	while True:
 		try:
