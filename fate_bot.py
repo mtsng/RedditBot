@@ -51,27 +51,9 @@ def check_flair_comments(submission, posts_flaired):
 	if submission.link_flair_text != None and submission.id not in posts_flaired:
 		posts_flair.append(submission.id)
 
-	print(submission.link_flair_text is None)
-	print(submission.id not in posts_flaired)
 	#checks for proper post "age", a missing flair, and absence in the posts_flaired list	
 	if (submission.link_flair_text is None and submission.id not in posts_flaired):
-		#loops through the top level comments of the post
-		for top_level_comment in submission.comments.list():
-			#checks the comment to see if it has the same author as the post and if they have a potential flair
-			if top_level_comment.author == submission.author and re.search("^\[.*\]$", top_level_comment.body):
-				flair_comment = top_level_comment.body
-				flair = flair_comment[1:len(flair_comment) - 1]
-				print(flair)
-				
-				#if the flair is valid, the post is flaired, otherwise inform the poster of an incorrect flair
-				if(check_valid_flair(flair)):
-					print("work")
-					top_level_comment.reply("Post has been flaired: " + flair)
-					posts_flaired.append(submission.id)
-					submission.mod.flair(text=flair, css_class=flairs[flair])
-				else:
-					print("fail")
-					top_level_comment.reply("Incorrect flair. Please flair manually.")
+		check_flair_helper(submission, posts_flaired);
 
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
@@ -82,17 +64,21 @@ def check_valid_flair(flair):
 	return False
 
 #checks if the user already commented a flair and flairs the post for them
-def check_preemptive_flair_comment(submission, posts_flaired):
-	
+def check_flair_helper(submission, posts_flaired):
+
+	#loops through the top level comments of the post	
 	for top_level_comment in submission.comments.list():
+		#checks the comment to see if it has the same author as the post and if they have potential flair
 		if top_level_comment.author == submission.author and re.search("^\[.*\]$", top_level_comment.body):
 			flair_comment = top_level_comment.body
 			flair = flair_comment[1:len(flair_comment) - 1]
 			
+			#if the flair is valid, the post is flaired, otherwise informt he post of the incorrect flair
 			if(check_valid_flair(flair)):
 				top_level_comment.reply("Post has been flaired: " + flair)
 				posts_flaired.append(submission.id)
 				submission.mod.flair(text=flair, css_class=flairs[flair])
+			
 				return True
 			else:
 				top_level_comment.reply("Incorrect flair. Please flair manually.")
@@ -108,7 +94,7 @@ def check_for_flair(submission, posts_replied_to, message, time_limit, posts_fla
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
 		if(time_diff >= time_limit and submission.link_flair_text is None):
-			if check_preemptive_flair_comment(submission, posts_flaired) == False:
+			if check_flair_helper(submission, posts_flaired) == False:
 				submission.reply(message)
 				posts_replied_to.append(submission.id)
 
@@ -119,9 +105,9 @@ def check_for_flair(submission, posts_replied_to, message, time_limit, posts_fla
 def main():
 	bot = 'bot1'
 	subreddit_name = "fgobottest"
-	text_limit = 100
-	start_pt_modifier = .25
-	post_limit = 2 #number of posts to be checked at a time
+	text_limit = 10
+	start_pt_modifier = 5
+	post_limit = 5 #number of posts to be checked at a time
 	time_limit = 300 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
 
@@ -155,14 +141,14 @@ def main():
 	#if statements ensure that text file length do not get too large
 	if len(posts_flaired) > text_limit:
 		flaired_length = len(posts_flaired)
-		start = start_pt_modifier * flaired_length
+		start = flaired_length - start_pt_modifier
 		end = flaired_length
 		temp_flaired = posts_flair[start:end]
 		posts_flaired = temp_flaired
 
 	if len(posts_replied_to) > text_limit:
 		replied_length = len(posts_replied_to)
-		start = start_pt_modifier * replied_length
+		start = replied_length - start_pt_modifier
 		end = replied_length
 		temp_replied_to = posts_replied_to[start:end]
 		posts_replied_to = temp_replied_to 
