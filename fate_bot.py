@@ -11,6 +11,11 @@ import datetime
 import time
 import sys
 
+flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoliers': 's', 'NA News': 't', 'NA PSA': 't',
+	'NA Spoliers': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 'PSA': 'k',
+	'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
+	'Poll': 'i'}
+
 #handle ratelimit issues by bboe
 def handle_ratelimit(func, *args, **kwargs):
 	while True:
@@ -55,11 +60,27 @@ def check_flair_reply(submission, posts_flaired, flair_check_timer):
 		for top_level_comment in submission.comments.list():
 			#checks the comment to see if it has the same author as the post and if they have a potential flair
 			if top_level_comment.author == submission.author and re.search("^\[.*\]$", top_level_comment.body):
-				flair = top_level_comment.body
-				print(flair[1:len(flair) - 1])
-				posts_flaired.append(submission.id)
-				#submission.mod.flair(text=flair, css_class='bot')
-					
+				flair_comment = top_level_comment.body
+				flair = flair_comment[1:len(flair_comment) - 1]
+				print(flair)
+
+				#if the flair is valid, the post is flaired, otherwise inform the poster of an incorrect flair
+				if(check_valid_flair(flair)):
+					top_level_comment.reply("Post has been flaired: " + flair)
+					posts_flaired.append(submission.id)
+					#submission.mod.flair(text=flair, css_class='bot')
+				else:
+					top_level_comment.reply("Incorrect flair. Please try again")
+
+#return true if the flair is valid, otherwise false					
+def check_valid_flair(flair):
+
+	try:
+		test = flairs[flair]
+	except KeyError:
+		return false
+	
+	return true
 
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
 def check_for_flair(submission, posts_replied_to, message, time_limit):		
@@ -83,7 +104,8 @@ def main():
 	bot = 'bot1'
 	subreddit_name = "pythonforengineers"
 	text_limit = 100
-	post_limit = 5 #number of posts to be checked at a time
+	start_pt_modifier = .25
+	post_limit = 1 #number of posts to be checked at a time
 	time_limit = 120 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
 	flair_check_timer = 300 #the amount of time (in seconds) given for user to flair post after bot comment
@@ -119,14 +141,14 @@ def main():
 	#if statements ensure that text file length do not get too large
 	if len(posts_flaired) > text_limit:
 		flaired_length = len(posts_flaired)
-		start = .25 * flaired_length
+		start = start_pt_modifier * flaired_length
 		end = flaired_length
 		temp_flaired = posts_flair[start:end]
 		posts_flaired = temp_flaired
 
 	if len(posts_replied_to) > text_limit:
 		replied_length = len(posts_replied_to)
-		start = .25 * replied_length
+		start = start_pt_modifier * replied_length
 		end = replied_length
 		temp_replied_to = posts_replied_to[start:end]
 		posts_replied_to = temp_replied_to 
