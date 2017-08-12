@@ -81,6 +81,7 @@ def check_valid_flair(flair):
 	
 	return False
 
+#checks if the user already commented a flair and flairs the post for them
 def check_preemptive_flair_comment(submission, posts_flaired):
 	
 	for top_level_comment in submission.comments.list():
@@ -107,7 +108,7 @@ def check_for_flair(submission, posts_replied_to, message, time_limit, posts_fla
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
 		if(time_diff >= time_limit and submission.link_flair_text is None):
-			if !check_preemptive_flair_comment(submission, posts_flaired):
+			if check_preemptive_flair_comment(submission, posts_flaired) == False:
 				submission.reply(message)
 				posts_replied_to.append(submission.id)
 
