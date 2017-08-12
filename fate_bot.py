@@ -45,21 +45,16 @@ def timestamp_to_UTC(timestamp):
 	return datetime.datetime.utcfromtimestamp(timestamp)
 
 #checks for flair comments from post author
-def check_flair_reply(submission, posts_flaired, flair_check_timer):
-	#time of the create of the post
-	post_time = timestamp_to_UTC(submission.created_utc)
-	#the seconds since the creation of the post
-	time_diff = cal_time_diff(post_time)
+def check_flair_comments(submission, posts_flaired):
 
 	#if user manually flairs post, add it the the posts_flaired list
 	if submission.link_flair_text != None and submission.id not in posts_flaired:
 		posts_flair.append(submission.id)
 
-	print(time_diff >= flair_check_timer)
 	print(submission.link_flair_text is None)
 	print(submission.id not in posts_flaired)
 	#checks for proper post "age", a missing flair, and absence in the posts_flaired list	
-	if (time_diff >= flair_check_timer and submission.link_flair_text is None and submission.id not in posts_flaired):
+	if (submission.link_flair_text is None and submission.id not in posts_flaired):
 		#loops through the top level comments of the post
 		for top_level_comment in submission.comments.list():
 			#checks the comment to see if it has the same author as the post and if they have a potential flair
@@ -76,7 +71,7 @@ def check_flair_reply(submission, posts_flaired, flair_check_timer):
 					submission.mod.flair(text=flair, css_class=flairs[flair])
 				else:
 					print("fail")
-					top_level_comment.reply("Incorrect flair. Please try again")
+					top_level_comment.reply("Incorrect flair. Please flair manually.")
 
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
@@ -86,8 +81,24 @@ def check_valid_flair(flair):
 	
 	return False
 
+def check_preemptive_flair_comment(submission, posts_flaired):
+	
+	for top_level_comment in submission.comments.list():
+		if top_level_comment.author == submission.author and re.search("^\[.*\]$", top_level_comment.body):
+			flair_comment = top_level_comment.body
+			flair = flair_comment[1:len(flair_comment) - 1]
+			
+			if(check_valid_flair(flair)):
+				top_level_comment.reply("Post has been flaired: " + flair)
+				posts_flaired.append(submission.id)
+				submission.mod.flair(text=flair, css_class=flairs[flair])
+				return True
+			else:
+				top_level_comment.reply("Incorrect flair. Please flair manually.")
+	return False
+
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
-def check_for_flair(submission, posts_replied_to, message, time_limit):		
+def check_for_flair(submission, posts_replied_to, message, time_limit, posts_flaired):		
 	#time of the creation of the post
 	post_time = timestamp_to_UTC(submission.created_utc)
 	#the number of seconds since the creation of the post
@@ -96,9 +107,9 @@ def check_for_flair(submission, posts_replied_to, message, time_limit):
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
 		if(time_diff >= time_limit and submission.link_flair_text is None):
-			submission.reply(message)
-
-			posts_replied_to.append(submission.id)
+			if !check_preemptive_flair_comment(submission, posts_flaired):
+				submission.reply(message)
+				posts_replied_to.append(submission.id)
 
 
 
@@ -112,8 +123,6 @@ def main():
 	post_limit = 2 #number of posts to be checked at a time
 	time_limit = 300 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
-	flair_check_timer = 300 #the amount of time (in seconds) given for user to flair post after bot comment
-#	interval_start = timeNow()
 
 	#Do not change below here unless you know your stuff
 	reddit = praw.Reddit(bot)
@@ -158,17 +167,16 @@ def main():
 		posts_replied_to = temp_replied_to 
 
 	#try-catch for connection errors with reddit
-	try:	
+	try:
 		#loops through the post_limit number of new posts
 		for submission in subreddit.new(limit=post_limit):
-			handle_ratelimit(check_for_flair, submission, posts_replied_to, message, time_limit)
-#			checkForFlair(submission, posts_replied_to, message, time_limit)
-
-		#loops through the visited, unflair posts for flair comments
+			handle_ratelimit(check_for_flair, submission, posts_replied_to, message, time_limit, posts_flaired)
+		
+		#loops through the visited, unflaired posts for flair comments
 		for post_id in posts_replied_to:
 			missing_flair_post = reddit.submission(post_id)
-			handle_ratelimit(check_flair_reply, missing_flair_post, posts_flaired, flair_check_timer)
-#			checkFlairReply(missing_flair_post, posts_flaired, flair_check_timer)
+			handle_ratelimit(check_flair_comments, missing_flair_post, posts_flaired)
+
 	except Exception:
 		sys.exc_clear()
 	
