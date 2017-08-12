@@ -1,6 +1,7 @@
 #This bot is based on the tutorial by shantnu
 #Check out his tutorial at: pythonforengineers.com/build-a-reddit-bot-part-1
-
+#Check out John Huttlinger too for his flair bot: github.com/JBHUTT09
+#Checkout bboe for his handling of the ratelimit: github.com/bboe 
 
 import praw
 import pdb
@@ -8,6 +9,17 @@ import os
 import re
 import datetime
 import time
+import sys
+
+#handle ratelimit issues
+def handle_ratelimit(func, *args, **kwargs):
+	while True:
+		try:
+			func(*args, **kwargs)
+			break
+		except praw.errors.RateLimitExceeded as error:
+			print("\tSleeping for %d seconds" + error.sleep_time)
+			tim.sleep(error.sleep_time)
 
 #finds the number of seconds that have past since posting
 def calTimeDiff(post_time):
@@ -100,23 +112,22 @@ def main():
 			posts_flaired = f.read()
 			posts_flaired = posts_flaired.split("\n")
 			posts_flaired = list(filter(None, posts_flaired))
-	
-	#loops through the post_limit number of new posts
-	for submission in subreddit.new(limit=post_limit):
-		checkForFlair(submission, posts_replied_to, message, time_limit)
 
-	#loops through the visited, unflair posts for flair comments
-	for post_id in posts_replied_to:
-		missing_flair_post = reddit.submission(post_id)
-		checkFlairReply(missing_flair_post, posts_flaired, flair_check_timer)
+	#try-catch for connection errors with reddit
+	try:	
+		#loops through the post_limit number of new posts
+		for submission in subreddit.new(limit=post_limit):
+			handle_ratelimit(checkForFlair, submission, posts_replied_to, message, time_limit)
+#			checkForFlair(submission, posts_replied_to, message, time_limit)
 
-#	if calTimeDiff(interval_start) >= flair_check_timer:
-#		interval_start = timeNow()
-
-#		for post_id in posts_replied_to:
-#			missing_flair_post = reddit.submission(post_id)
+		#loops through the visited, unflair posts for flair comments
+		for post_id in posts_replied_to:
+			missing_flair_post = reddit.submission(post_id)
+			handle_ratelimit(checkFlairReply, missing_flair_post, posts_flaired, flair_check_timer)
 #			checkFlairReply(missing_flair_post, posts_flaired, flair_check_timer)
-
+	except Exception:
+		sys.exc_clear()
+	
 	#writes the list back to the file	
 	with open("posts_replied_to.txt", "w") as f:
 		for post_id in posts_replied_to:
