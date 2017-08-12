@@ -81,9 +81,9 @@ def main():
 	bot = 'bot1'
 	subredditname = "pythonforengineers"
 	post_limit = 5 #number of posts to be checked at a time
-	time_limit = 120 #time limit for unflaired post before bot comment
+	time_limit = 120 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
-	flair_check_timer = 300 #the amount of time given for user to flair post after bot comment
+	flair_check_timer = 300 #the amount of time (in seconds) given for user to flair post after bot comment
 #	interval_start = timeNow()
 
 	#Do not change below here unless you know your stuff
