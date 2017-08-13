@@ -105,8 +105,8 @@ def check_for_flair(submission, posts_replied_to, message, time_limit, posts_fla
 def main():
 	bot = 'bot1'
 	subreddit_name = "fgobottest"
-	text_limit = 10
-	start_pt_modifier = 5
+	text_limit = 10 #length limit of save file for post ids
+	keep_limit = 5 #should be a whole number and flat of the text_limit
 	post_limit = 5 #number of posts to be checked at a time
 	time_limit = 300 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
@@ -141,14 +141,14 @@ def main():
 	#if statements ensure that text file length do not get too large
 	if len(posts_flaired) > text_limit:
 		flaired_length = len(posts_flaired)
-		start = flaired_length - start_pt_modifier
+		start = keep_limit
 		end = flaired_length
 		temp_flaired = posts_flair[start:end]
 		posts_flaired = temp_flaired
 
 	if len(posts_replied_to) > text_limit:
 		replied_length = len(posts_replied_to)
-		start = replied_length - start_pt_modifier
+		start = keep_limit
 		end = replied_length
 		temp_replied_to = posts_replied_to[start:end]
 		posts_replied_to = temp_replied_to 
