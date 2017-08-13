@@ -11,8 +11,8 @@ import datetime
 import time
 import sys
 
-flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoliers': 's', 'NA News': 't', 'NA PSA': 't',
-	'NA Spoliers': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 'PSA': 'k',
+flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoilers': 's', 'NA News': 't', 'NA PSA': 't',
+	'NA Spoilers': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 'PSA': 'k',
 	'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
 	'Poll': 'i', 'Moderator': 'a', 'Maintenance': 'c', 'Stream': 'b', 'OC': 'b', 'New Post': 'b'}
 
