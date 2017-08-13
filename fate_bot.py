@@ -12,8 +12,8 @@ import time
 import sys
 
 flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoilers': 's', 'NA News': 't', 'NA PSA': 't',
-	'NA Spoilers': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 'PSA': 'k',
-	'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
+	'NA Spoilers': 't', 'NA Discussion': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 
+	'PSA': 'k', 'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
 	'Poll': 'i', 'Moderator': 'a', 'Maintenance': 'c', 'Stream': 'b', 'OC': 'b', 'New Post': 'b'}
 
 
@@ -80,8 +80,8 @@ def check_flair_helper(submission, posts_flaired):
 				submission.mod.flair(text=flair, css_class=flairs[flair])
 			
 				return True
-			else:
-				top_level_comment.reply("Incorrect flair. Please flair manually.")
+		#	else:
+		#		top_level_comment.reply("Incorrect flair. Please flair manually.")
 	return False
 
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
