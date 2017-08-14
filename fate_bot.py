@@ -26,7 +26,7 @@ def handle_ratelimit(func, *args, **kwargs):
 			break
 		except praw.errors.RateLimitExceeded as error:
 			print("\tSleeping for %d seconds" + error.sleep_time)
-			tim.sleep(error.sleep_time)
+			time.sleep(error.sleep_time)
 
 #finds the number of seconds that have past since posting
 def cal_time_diff(post_time):
@@ -46,20 +46,15 @@ def timestamp_to_UTC(timestamp):
 	return datetime.datetime.utcfromtimestamp(timestamp)
 
 #checks for flair comments from post author
-def check_flair_comments(submission, posts_replied_to):
+def check_flair_comments(submission, posts_flaired):
 
 	#if user manually flairs post, add it the the posts_flaired list
-	if submission.link_flair_text != None:
-		remove_submission_id(posts_replied_to, submission.id)
+	if submission.link_flair_text != None and submission.id not in posts_flaired:
+		posts_flair.append(submission.id)
 
 	#checks for proper post "age", a missing flair, and absence in the posts_flaired list	
-	if submission.link_flair_text is None:
-		check_flair_helper(submission, posts_replied_to);
-
-#removes flaired post from posts_replied_to list in order reduce space of text file
-def remove_submission_id(posts_replied_to, id):
-	if id in posts_replied_to:
-		posts_replied_to.remove(id)
+	if (submission.link_flair_text is None and submission.id not in posts_flaired):
+		check_flair_helper(submission, posts_flaired);
 
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
@@ -70,7 +65,7 @@ def check_valid_flair(flair):
 	return False
 
 #checks if the user already commented a flair and flairs the post for them
-def check_flair_helper(submission, posts_replied_to):
+def check_flair_helper(submission, posts_flaired):
 
 	#loops through the top level comments of the post	
 	for top_level_comment in submission.comments.list():
@@ -82,8 +77,8 @@ def check_flair_helper(submission, posts_replied_to):
 			#if the flair is valid, the post is flaired, otherwise informt he post of the incorrect flair
 			if(check_valid_flair(flair)):
 				top_level_comment.reply("Post has been flaired: " + flair)
+				posts_flaired.append(submission.id)
 				submission.mod.flair(text=flair, css_class=flairs[flair])
-				remove_submission_id(posts_replied_to, submission.id)
 			
 				return True
 		#	else:
@@ -91,7 +86,7 @@ def check_flair_helper(submission, posts_replied_to):
 	return False
 
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
-def check_for_flair(submission, posts_replied_to, message, time_limit):		
+def check_for_flair(submission, posts_replied_to, message, time_limit, posts_flaired):		
 	#time of the creation of the post
 	post_time = timestamp_to_UTC(submission.created_utc)
 	#the number of seconds since the creation of the post
@@ -100,7 +95,7 @@ def check_for_flair(submission, posts_replied_to, message, time_limit):
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
 		if(time_diff >= time_limit and submission.link_flair_text is None):
-			if check_flair_helper(submission, posts_replied_to) == False:
+			if check_flair_helper(submission, posts_flaired) == False:
 				submission.reply(message)
 				posts_replied_to.append(submission.id)
 
@@ -111,8 +106,10 @@ def check_for_flair(submission, posts_replied_to, message, time_limit):
 def main():
 	bot = 'bot1'
 	subreddit_name = "fgobottest"
+	text_limit = 10 #length limit of save file for post ids
+	keep_limit = 5 #should be a whole number and flat of the text_limit
 	post_limit = 5 #number of posts to be checked at a time
-	time_limit = 180 #time limit (in seconds) for unflaired post before bot comment
+	time_limit = 300 #time limit (in seconds) for unflaired post before bot comment
 	message = "Please Flair" #Bot message
 
 	#Do not change below here unless you know your stuff
@@ -130,25 +127,54 @@ def main():
 			posts_replied_to = f.read()
 			posts_replied_to = posts_replied_to.split("\n")
 			posts_replied_to = list(filter(None, posts_replied_to))
-			temp_posts_replied_to = list(filter(None, posts_replied_to))
+
+	#creates/opens a text file that tracks flaired posts after bot comment; prevents excess work from bot
+	if not os.path.isfile("posts_flaired.txt"):
+		#if file does not exist, create a new list
+		posts_flaired = []
+	else:
+		#opens existing file and creates a list of content
+		with open("posts_flaired.txt", "r") as f:
+			posts_flaired = f.read()
+			posts_flaired = posts_flaired.split("\n")
+			posts_flaired = list(filter(None, posts_flaired))
+
+	#if statements ensure that text file length do not get too large
+	if len(posts_flaired) > text_limit:
+		flaired_length = len(posts_flaired)
+		start = keep_limit
+		end = flaired_length
+		temp_flaired = posts_flair[start:end]
+		posts_flaired = temp_flaired
+
+	if len(posts_replied_to) > text_limit:
+		replied_length = len(posts_replied_to)
+		start = keep_limit
+		end = replied_length
+		temp_replied_to = posts_replied_to[start:end]
+		posts_replied_to = temp_replied_to 
 
 	#try-catch for connection errors with reddit
 	try:
 		#loops through the post_limit number of new posts
 		for submission in subreddit.new(limit=post_limit):
-			handle_ratelimit(check_for_flair, submission, temp_posts_replied_to, message, time_limit)
+			handle_ratelimit(check_for_flair, submission, posts_replied_to, message, time_limit, posts_flaired)
 		
 		#loops through the visited, unflaired posts for flair comments
 		for post_id in posts_replied_to:
 			missing_flair_post = reddit.submission(post_id)
-			handle_ratelimit(check_flair_comments, missing_flair_post, temp_posts_replied_to)
+			handle_ratelimit(check_flair_comments, missing_flair_post, posts_flaired)
 
 	except Exception:
 		sys.exc_clear()
 	
 	#writes the list back to the file	
 	with open("posts_replied_to.txt", "w") as f:
-		for post_id in temp_posts_replied_to:
+		for post_id in posts_replied_to:
+			f.write(post_id + "\n")
+	#writes the list beck to the file
+	with open("posts_flaired.txt", "w") as f:
+		for post_id in posts_flaired:
 			f.write(post_id + "\n")
 
 main()	
