@@ -57,9 +57,9 @@ def check_flair_comments(submission, posts_replied_to):
 		check_flair_helper(submission, posts_replied_to);
 
 #removes flaired post from posts_replied_to list in order reduce space of text file
-def remove_submission_id(posts_replied_to, id):
-	if id in posts_replied_to:
-		posts_replied_to.remove(id)
+def remove_submission_id(posts_replied_to, submission_id):
+	if submission_id in posts_replied_to:
+		posts_replied_to.remove(submission_id)
 
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
