@@ -20,6 +20,7 @@ flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoilers': 's
 
 #handle ratelimit issues by bboe
 def handle_ratelimit(func, *args, **kwargs):
+
 	while True:
 		try:
 			func(*args, **kwargs)
@@ -48,16 +49,17 @@ def timestamp_to_UTC(timestamp):
 #checks for flair comments from post author
 def check_flair_comments(submission, posts_replied_to):
 
-	#if user manually flairs post, add it the the posts_flaired list
+	#if user flairs post, remove from posts_replied_to text file to reduce the amount of work
 	if submission.link_flair_text != None:
 		remove_submission_id(posts_replied_to, submission.id)
 
-	#checks for proper post "age", a missing flair, and absence in the posts_flaired list	
+	#checks for missing flair	
 	if submission.link_flair_text is None:
 		check_flair_helper(submission, posts_replied_to);
 
 #removes flaired post from posts_replied_to list in order reduce space of text file
 def remove_submission_id(posts_replied_to, submission_id):
+
 	if submission_id in posts_replied_to:
 		posts_replied_to.remove(submission_id)
 
@@ -91,11 +93,17 @@ def check_flair_helper(submission, posts_replied_to):
 	return False
 
 #checks to see if post is flaired and the age of the post; if the post is "old" enough and unflaired, the bot comments;		
-def check_for_flair(submission, posts_replied_to, message, time_limit):		
+def check_for_flair(submission, posts_replied_to, message, time_limit, drop_time_limit):		
 	#time of the creation of the post
 	post_time = timestamp_to_UTC(submission.created_utc)
 	#the number of seconds since the creation of the post
 	time_diff = cal_time_diff(post_time)
+
+
+	#if the post goes unflaired for a certain amount of time, the bot just stops checking on the post for flairs
+	if time_diff >= drop_time_limit:
+		remove_submission_id(posts_replied_to, submission.id)
+		return
 	
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
@@ -113,6 +121,7 @@ def main():
 	subreddit_name = "fgobottest"
 	post_limit = 5 #number of posts to be checked at a time
 	time_limit = 180 #time limit (in seconds) for unflaired post before bot comment
+	drop_time_limit = 7200 #time limit (in seconds) for bot to stop checking a post for a flair
 	message = "Please Flair" #Bot message
 
 	#Do not change below here unless you know your stuff
@@ -136,7 +145,7 @@ def main():
 	try:
 		#loops through the post_limit number of new posts
 		for submission in subreddit.new(limit=post_limit):
-			handle_ratelimit(check_for_flair, submission, temp_posts_replied_to, message, time_limit)
+			handle_ratelimit(check_for_flair, submission, temp_posts_replied_to, message, time_limit, drop_time_limit)
 		
 		#loops through the visited, unflaired posts for flair comments
 		for post_id in posts_replied_to:
