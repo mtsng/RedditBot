@@ -15,7 +15,7 @@ import sys
 flairs = {'JP News': 's', 'JP Discussion': 's', 'JP PSA': 's', 'JP Spoilers': 's', 'NA News': 't', 'NA PSA': 't',
 	'NA Spoilers': 't', 'NA Discussion': 't', 'News': 'd', 'Tips & Tricks': 'i', 'Fluff': 'b', 'Comic': 'b', 'Guide': 'i', 
 	'PSA': 'k', 'Rumor': 'c', 'WEEKLY RANT': 'j', 'Translated': 'f', 'Story Translation': 'i', 'Discussion': 'i',
-	'Poll': 'i', 'Moderator': 'a', 'Maintenance': 'c', 'Stream': 'b', 'OC': 'b'}
+	'Poll': 'i', 'Moderator': 'a', 'Maintenance': 'c', 'Stream': 'b', 'OC': 'b', 'New Post': 'b'}
 
 
 #handle ratelimit issues by bboe
@@ -50,11 +50,11 @@ def timestamp_to_UTC(timestamp):
 def check_flair_comments(submission, posts_replied_to):
 
 	#if user flairs post, remove from posts_replied_to text file to reduce the amount of work
-	if submission.link_flair_text != "New Post":
+	if submission.link_flair_text != None:
 		remove_submission_id(posts_replied_to, submission.id)
 
 	#checks for missing flair	
-	if submission.link_flair_text == "New Post":
+	if submission.link_flair_text is None:
 		check_flair_helper(submission, posts_replied_to);
 
 #removes flaired post from posts_replied_to list in order reduce space of text file
@@ -63,11 +63,6 @@ def remove_submission_id(posts_replied_to, submission_id):
 	if submission_id in posts_replied_to:
 		posts_replied_to.remove(submission_id)
 
-#removes post from subreddit due to being un-flaired for a period of time
-def remove_post(submission, posts_replied_to):
-			remove_submission_id(posts_replied_to, submission.id)
-			submission.mod.remove()
-		
 #return true if the flair is valid, otherwise false					
 def check_valid_flair(flair):
 	
@@ -106,13 +101,13 @@ def check_for_flair(submission, posts_replied_to, message, time_limit, drop_time
 
 
 	#if the post goes unflaired for a certain amount of time, the bot just stops checking on the post for flairs
-	if submission.link_flair_text == "New Post" and time_diff >= drop_time_limit:
-		remove_post(submission, posts_replied_to)
+	if time_diff >= drop_time_limit:
+		remove_submission_id(posts_replied_to, submission.id)
 		return
 	
 	#if the post has not been visited and time and flair conditions are true, the bot comments and adds it to the visited list
 	if submission.id not in posts_replied_to:
-		if(time_diff >= time_limit and submission.link_flair_text == "New Post"):
+		if(time_diff >= time_limit and submission.link_flair_text is None):
 			if check_flair_helper(submission, posts_replied_to) == False:
 				submission.reply(message)
 				posts_replied_to.append(submission.id)
@@ -126,7 +121,7 @@ def main():
 	subreddit_name = "fgobottest"
 	post_limit = 5 #number of posts to be checked at a time
 	time_limit = 180 #time limit (in seconds) for unflaired post before bot comment
-	drop_time_limit = 3600 #time limit (in seconds) for bot to stop checking a post for a flair
+	drop_time_limit = 7200 #time limit (in seconds) for bot to stop checking a post for a flair
 	message = "**Please Flair**" #Bot message
 
 	#Do not change below here unless you know your stuff
